@@ -1,7 +1,5 @@
-# ====================================================================================================
-                          Vehicle Rental System Database Design
-# ====================================================================================================
 
+                          Vehicle Rental System Database Design
 # Overview
 
 This project implements a comprehensive database design for a vehicle rental system using PostgreSQL. The database schema includes three tables like users, vehicles, and bookings, along with custom data types and triggers(Which I have use for my practice perpose) to maintain data integrity and automate updates. The system supports different user roles (Admin and Customer), various vehicle types (car, bike, truck), and booking statuses to manage the rental process efficiently.
