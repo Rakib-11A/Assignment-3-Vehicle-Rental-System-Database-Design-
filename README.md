@@ -26,62 +26,63 @@ This project implements a comprehensive database design for a vehicle rental sys
 # Triggers
 
 - Automatic updated_at timestamp updates for all tables using a PostgreSQL trigger function
-
+```sql
   CREATE OR REPLACE FUNCTION autometic_updated_at() RETURNS TRIGGER AS $$ 
     BEGIN
       NEW.updated_at = CURRENT_TIMESTAMP;
       RETURN NEW;
     END;
   $$ LANGUAGE plpgsql;
-
+```
 
 -- Trigger function for users updated_at
-
+```sql
   CREATE TRIGGER trigger_users_updated_at
   BEFORE UPDATE ON users 
   FOR EACH ROW 
   EXECUTE FUNCTION autometic_updated_at();
-
+```
 -- Trigger function for vehicles updated_at
-
+```sql
   CREATE TRIGGER trigger_vehicle_updated_at
   BEFORE UPDATE ON vehicles
   FOR EACH ROW
   EXECUTE FUNCTION autometic_updated_at();
-
+```
 
 -- Trigger for bookings updated_at
-
+```sql
   CREATE TRIGGER update_bookings_updated_at
   BEFORE UPDATE ON bookings
   FOR EACH ROW 
   EXECUTE FUNCTION autometic_updated_at();
-
+```
 # Custom Types
 
 -- Create ENUM for role
-
+```sql
     DROP TYPE IF EXISTS role_type CASCADE;
     CREATE TYPE role_type AS ENUM ('Admin', 'Customer');
-
+```
 -- Create ENUM from vehicle_type
-
+```sql
     DROP TYPE IF EXISTS vehicle_type CASCADE;
     CREATE TYPE vehicle_type AS ENUM('car', 'bike', 'truck');
-
+```
 -- Create ENUM for type and status
-
+```sql
     DROP TYPE IF EXISTS vehicle_status_type CASCADE;
     CREATE TYPE vehicle_status_type AS ENUM ('available', 'rented', 'maintenance');
-
+```
 -- Create ENUM for status
-
+```sql
     DROP TYPE IF EXISTS booking_status_type CASCADE;
     CREATE TYPE booking_status_type AS ENUM ('pending', 'confirmed', 'cancelled', 'completed');
-  
+  ```
 # Table Creation
+  ## users
 
-  # users
+```sql
     CREATE TABLE IF NOT EXISTS users (
       user_id BIGSERIAL PRIMARY KEY,
       role role_type NOT NULL,
@@ -93,8 +94,9 @@ This project implements a comprehensive database design for a vehicle rental sys
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
-
-  # vehicles
+```
+  ## vehicles
+  ```sql
       CREATE TABLE IF NOT EXISTS vehicles (
       vehicle_id BIGSERIAL PRIMARY KEY,
       name VARCHAR(100) NOT NULL,
@@ -107,9 +109,10 @@ This project implements a comprehensive database design for a vehicle rental sys
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMPTZ DEFAULT current_timestamp
     );
+```
 
-
-  # bookings
+  ## bookings
+  ```sql
     CREATE TABLE IF NOT EXISTS bookings (
       booking_id BIGSERIAL PRIMARY KEY,
       user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
@@ -122,39 +125,39 @@ This project implements a comprehensive database design for a vehicle rental sys
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
-
+```
 
 # Sample Data
 
 The database includes sample data for demonstration:
 - 3 users (1 Admin, 2 Customers)
-
+  ```sql
   INSERT INTO users (name, email, password, phone, role) VALUES
   ('Alice', 'alice@example.com', '$2a$12$R9h/lSAbVLxjCF5nBV5Sbe.S6TfS6S.Gf9/wWwXwYyZz123456789', '1234567890', 'Customer'),
   ('Bob', 'bob@example.com', '$2a$12$KIX9fG3.A.SByM4.S.SByM4.S.SByM4.S.SByM4.S.SByM4.', '0987654321', 'Admin'),
   ('Charlie', 'charlie@example.com', '$2a$12$D4.SByM4.S.SByM4.S.SByM4.S.SByM4.S.SByM4.S.SB', '1122334455', 'Customer');
-
+  ```
 - 4 vehicles (cars, bikes, trucks with different statuses)
-
+  ```sql
   INSERT INTO vehicles (name, type, model, registration_number, rental_price, status) VALUES
   ('Toyota Corolla', 'car', '2022', 'ABC-123', 50.00, 'available'),
   ('Honda Civic', 'car', '2021', 'DEF-456', 60.00, 'rented'),
   ('Yamaha R15', 'bike', '2023', 'GHI-789', 30.00, 'available'),
   ('Ford F-150', 'truck', '2020', 'JKL-012', 100.00, 'maintenance');
-
+  ```
 - 4 bookings with various statuses
-
+  ```sql
   INSERT INTO bookings (user_id, vehicle_id, start_date, end_date, status, total_cost) VALUES
   (1, 2, '2023-10-01', '2023-10-05', 'completed', 240.00),
   (2, 2, '2023-11-01', '2023-11-03', 'completed', 120.00),
   (3, 2, '2023-12-01', '2023-12-02', 'confirmed', 60.00),
   (1, 1, '2023-12-10', '2023-12-12', 'pending', 100.00);
-
+  ```
 # Queries and Solutions
 
 The following queries demonstrate various SQL operations on the vehicle rental system database. All queries are included in the `Vehicle Rental System Query` file.
 
-# Query 1: Join Operation
+## Query 1: Join Operation
 Objective: Retrieve booking information along with customer name and vehicle name.
 
 ```sql
@@ -172,7 +175,7 @@ INNER JOIN vehicles AS v ON b.vehicle_id = v.vehicle_id;
 
 Solution: This query uses INNER JOINs to combine data from the bookings, users, and vehicles tables, providing a comprehensive view of each booking with associated customer and vehicle details.
 
-# Query 2: EXISTS Clause
+## Query 2: EXISTS Clause
 Objective: Find all vehicles that have never been booked.
 
 ```sql
@@ -195,7 +198,7 @@ ORDER BY vehicle_id ASC;
 
 Solution: This query uses the NOT EXISTS clause to identify vehicles that do not have any corresponding records in the bookings table, effectively finding unbooked vehicles.
 
-# Query 3: WHERE Clause with Function
+## Query 3: WHERE Clause with Function
 Objective: Retrieve all available vehicles of a specific type (e.g., cars).
 
 Basic Query:
@@ -255,7 +258,7 @@ SELECT * FROM get_available_vehicles_by_type('truck');
 
 Solution: The basic query filters vehicles by type and availability status. The function provides a reusable, parameterized approach to retrieve available vehicles of any specified type, with error handling for cases where no vehicles are found.
 
-# Query 4: GROUP BY and HAVING
+## Query 4: GROUP BY and HAVING
 Objective: Find the total number of bookings for each vehicle and display only those vehicles that have more than 2 bookings.
 
 ```sql
