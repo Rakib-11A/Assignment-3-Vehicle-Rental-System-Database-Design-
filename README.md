@@ -94,7 +94,35 @@ This project implements a comprehensive database design for a vehicle rental sys
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
 
-  #   
+  # vehicles
+      CREATE TABLE IF NOT EXISTS vehicles (
+      vehicle_id BIGSERIAL PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      type vehicle_type NOT NULL,
+      model VARCHAR(150) NOT NULL,
+      registration_number VARCHAR(255) UNIQUE NOT NULL,
+      rental_price DECIMAL NOT NULL DEFAULT 0.00 CHECK (rental_price >= 0),
+      status vehicle_status_type NOT NULL DEFAULT 'available',
+
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT current_timestamp
+    );
+
+
+  # bookings
+    CREATE TABLE IF NOT EXISTS bookings (
+      booking_id BIGSERIAL PRIMARY KEY,
+      user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+      vehicle_id BIGINT NOT NULL REFERENCES vehicles(vehicle_id) ON DELETE CASCADE,
+      start_date DATE NOT NULL,
+      end_date DATE NOT NULL,
+      status booking_status_type NOT NULL DEFAULT 'pending',
+      total_cost DECIMAL(10, 2) DEFAULT 0.00 CHECK( total_cost >= 0),
+
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
 
 # Sample Data
 
@@ -114,13 +142,13 @@ The database includes sample data for demonstration:
   ('Yamaha R15', 'bike', '2023', 'GHI-789', 30.00, 'available'),
   ('Ford F-150', 'truck', '2020', 'JKL-012', 100.00, 'maintenance');
 
-  - 4 bookings with various statuses
+- 4 bookings with various statuses
 
-    INSERT INTO bookings (user_id, vehicle_id, start_date, end_date, status, total_cost) VALUES
-    (1, 2, '2023-10-01', '2023-10-05', 'completed', 240.00),
-    (2, 2, '2023-11-01', '2023-11-03', 'completed', 120.00),
-    (3, 2, '2023-12-01', '2023-12-02', 'confirmed', 60.00),
-    (1, 1, '2023-12-10', '2023-12-12', 'pending', 100.00);
+  INSERT INTO bookings (user_id, vehicle_id, start_date, end_date, status, total_cost) VALUES
+  (1, 2, '2023-10-01', '2023-10-05', 'completed', 240.00),
+  (2, 2, '2023-11-01', '2023-11-03', 'completed', 120.00),
+  (3, 2, '2023-12-01', '2023-12-02', 'confirmed', 60.00),
+  (1, 1, '2023-12-10', '2023-12-12', 'pending', 100.00);
 
 # Queries and Solutions
 
@@ -129,6 +157,7 @@ The following queries demonstrate various SQL operations on the vehicle rental s
 # Query 1: Join Operation
 Objective: Retrieve booking information along with customer name and vehicle name.
 
+```sql
 SELECT
   b.booking_id,
   c.name AS customer_name,
@@ -139,14 +168,14 @@ SELECT
 FROM bookings AS b
 INNER JOIN users AS c ON b.user_id = c.user_id
 INNER JOIN vehicles AS v ON b.vehicle_id = v.vehicle_id;
-
+```
 
 Solution: This query uses INNER JOINs to combine data from the bookings, users, and vehicles tables, providing a comprehensive view of each booking with associated customer and vehicle details.
 
 # Query 2: EXISTS Clause
 Objective: Find all vehicles that have never been booked.
 
-
+```sql
 SELECT
   v.vehicle_id,
   v.name,
@@ -162,6 +191,7 @@ WHERE NOT EXISTS (
   WHERE b.vehicle_id = v.vehicle_id
 )
 ORDER BY vehicle_id ASC;
+```
 
 Solution: This query uses the NOT EXISTS clause to identify vehicles that do not have any corresponding records in the bookings table, effectively finding unbooked vehicles.
 
@@ -169,7 +199,7 @@ Solution: This query uses the NOT EXISTS clause to identify vehicles that do not
 Objective: Retrieve all available vehicles of a specific type (e.g., cars).
 
 Basic Query:
-
+```sql
 SELECT
     vehicle_id,
     name,
@@ -180,10 +210,11 @@ SELECT
     available_status AS status
 FROM vehicles
 WHERE type = 'car' AND available_status = 'available';
-
+```
 
 Parameterized Function:
 
+```sql
 CREATE OR REPLACE FUNCTION get_available_vehicles_by_type(input_type vehicle_type)
 RETURNS TABLE (
     vehicle_id BIGINT,
@@ -213,21 +244,21 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
-
+```
 
 Usage Examples:
-
+```sql
 SELECT * FROM get_available_vehicles_by_type('car');
 SELECT * FROM get_available_vehicles_by_type('bike');
 SELECT * FROM get_available_vehicles_by_type('truck');
-
+```
 
 Solution: The basic query filters vehicles by type and availability status. The function provides a reusable, parameterized approach to retrieve available vehicles of any specified type, with error handling for cases where no vehicles are found.
 
 # Query 4: GROUP BY and HAVING
 Objective: Find the total number of bookings for each vehicle and display only those vehicles that have more than 2 bookings.
 
-
+```sql
 SELECT
     v.name AS vehicle_name,
     COUNT(b.booking_id) AS total_bookings
@@ -236,7 +267,7 @@ INNER JOIN bookings b ON v.vehicle_id = b.vehicle_id
 GROUP BY v.name
 HAVING COUNT(b.booking_id) > 2
 ORDER BY total_bookings DESC;
-
+```
 
 Solution: This query groups bookings by vehicle name, counts the total bookings per vehicle, and filters the results to show only vehicles with more than 2 bookings, ordered by the total number of bookings in descending order.
 
