@@ -278,8 +278,9 @@ Solution: This query groups bookings by vehicle name, counts the total bookings 
 
 1. Ensure PostgreSQL is installed and running on your system.
 2. Create a new database for the vehicle rental system.
-3. Execute the SQL commands in the `Vehicle Rental System Query` file in order.
-4. The file includes schema creation, data insertion, and query examples.
+3. Compy trigger, enum, table creation, data insertion code from this files above and paste it to your SQL shell.
+4. Execute the SQL commands in the `Vehicle Rental System Query` file in order.
+5. The file includes schema creation, data insertion, and query examples.
 
 # Notes
 
